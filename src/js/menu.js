@@ -1,21 +1,18 @@
-
-Spliter.Menu = function(game) {
-    this.menuBackground;
+menu = function(game) {
     this.touchToStart;
 };
 
-Spliter.Menu.prototype = {
+menu.prototype = {
 
     create: function() {
-        menuBackground = this.add.image(0, 0, "menu-background");
-        menuBackground.inputEnabled = true;
-        menuBackground.events.onInputDown.addOnce(this.startGame, this);
 
-        touchToStart = this.add.text(this.world.centerX-155, this.world.centerY+180, 'Touch to Start!', { fill: '#000000' })
-    },
+        touchToStart = this.add.text(this.world.centerX-155, this.world.centerY+180, 'Press any key to start', { fill: '#ffffff' });
 
-    startGame: function(pointer){
-        this.state.start("Game");
+        this.game.input.keyboard.onDownCallback = function() {
+            this.game.state.start('Lvl1');
+            
+            var keyboard = this.game.input.keyboard;
+            keyboard.onDownCallback = keyboard.onUpCallback = keyboard.onPressCallback = null;
+        };
     }
-
 };

@@ -1,6 +1,8 @@
-var Spliter = {};
+preloader = function () {
 
-Spliter.Preloader.prototype = {
+};
+
+preloader.prototype = {
 
     preload: function() {
     	this.done = false;
@@ -12,7 +14,7 @@ Spliter.Preloader.prototype = {
 
     update: function() {
         this.done = true;
-        this.state.start('Menu');
+        this.game.state.start('Menu');
     }
 
 };
