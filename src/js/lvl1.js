@@ -105,8 +105,6 @@ lvl1.prototype = {
         lifeCount--;
         if (lifeCount == 0) {
             // Game over
-            game.destroy();
-            return;
         }
         textGroup.remove(lifeText);
         lifeText = game.make.text(0, 0, 'life count: ' + lifeCount, textStyle);
