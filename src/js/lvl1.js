@@ -4,14 +4,15 @@ lvl1 = function(game) {
 
 var dudeSpriteHeight = 48.0, dudeSpriteWidth = 32.0;
 var dudeHeight = 24.0, dudeWidth = 16.0;
-var borderSize = 0;
+var borderSize = 16;
 var dude;
 var cursors;
 var invaderGroup;
 var trailGroup;
+var dudeCenterGroup, dudeCenter;
 var invaders = [];
 var invaderSize = 16.0;
-var invaderCount = 6;
+var invaderCount = 1;
 var trailHeight = 8;
 var trail = [];
 var borderGroup;
@@ -24,8 +25,8 @@ lvl1.prototype = {
     	game.load.spritesheet('dude', 'assets/images/dude.png', dudeSpriteWidth, dudeSpriteHeight);
         game.load.image('invader1', 'assets/images/invader1.png');
         game.load.image('invader2', 'assets/images/invader2.png');
-        game.load.image('trail', 'assets/images/trail.png');
         game.load.image('border', 'assets/images/border.png');
+        game.load.image('trail', 'assets/images/1x1_red.png')
 
         cursors = game.input.keyboard.createCursorKeys();
     },
@@ -63,6 +64,12 @@ lvl1.prototype = {
         trailGroup = game.add.group();
         trailGroup.enableBody = true;
 
+        dudeCenterGroup = game.add.group();
+        dudeCenterGroup.enableBody = true;
+
+        dudeCenter = dudeCenterGroup.create(dude.body.x + dudeWidth / 2.0, dude.body.y + dudeHeight / 2.0);
+        dudeCenter.body.height = 1.0;
+        dudeCenter.body.width = 1.0;
 
         for (i = 0; i < invaderCount; i++) {
 
@@ -85,21 +92,36 @@ lvl1.prototype = {
     },
 
 
-    collision: function(invader, singleTrail) {
-
+    collision: function(singleTrail, invader) {
         for (i = 0; i < trail.length; i++)
             trail[i].kill();
-
         trail = [];
         dude.body.x = 0;
         dude.body.y = game.world.height - dude.body.height;
+    },
 
-        return;
+    trailIntersect: function(dude, singleTrail) {
+        for (i = 0; i < trail.length; i++) {
+            if (trail[i] == singleTrail) {
+                if (i < trail.length - 4) {
+                    for (j = i; j < trail.length; j++)
+                        trail[j].kill();
+                    trail.length = i;
+                    break;
+                }
+                else
+                    break;
+            }
+        }
     },
 
     update: function() {
 
-    	game.physics.arcade.overlap(trailGroup, invaderGroup, this.collision, null, this);
+        dudeCenter.body.x = dude.body.x + dudeWidth / 2.0;
+        dudeCenter.body.y = dude.body.y + dudeHeight / 2.0;
+
+        game.physics.arcade.overlap(trailGroup, invaderGroup, this.collision, null, this);
+        game.physics.arcade.overlap(dudeCenterGroup, trailGroup, this.trailIntersect, null, this);
 
         dude.body.velocity.x = 0;
         dude.body.velocity.y = 0;
@@ -144,8 +166,8 @@ lvl1.prototype = {
             }
             return;
         }
-        var cur = trailGroup.create(dude.body.x + dudeWidth / 2.0, dude.body.y + dudeHeight / 2.0, 'trail');
-        cur.scale.setTo(trailHeight / 256.0, trailHeight / 256.0);
+        var cur = trailGroup.create(dudeCenter.body.x, dudeCenter.body.y, 'trail');
+        cur.scale.setTo(2.0, 2.0); 
         trail.push(cur);
     }
 };
