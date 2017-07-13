@@ -2,10 +2,10 @@ lvl1 = function(game) {
 
 };
 
-var lifeCount = 3, textGroup, lifeText;
+var lifeCount = 3, textGroup, lifeText, textStyle = {font: "15pt Arial", fill: '#ffffff'};
 var dudeSpriteHeight = 48.0, dudeSpriteWidth = 32.0;
 var dudeHeight = 24.0, dudeWidth = 16.0;
-var borderSize = 16;
+var borderSize = 0;
 var dude;
 var cursors;
 var invaderGroup;
@@ -13,7 +13,7 @@ var trailGroup;
 var dudeCenterGroup, dudeCenter;
 var invaders = [];
 var invaderSize = 16.0;
-var invaderCount = 1;
+var invaderCount = 4;
 var trailHeight = 8;
 var trail = [];
 var borderGroup;
@@ -90,10 +90,9 @@ lvl1.prototype = {
             invaders[i].body.bounce.x = 1;
             invaders[i].body.bounce.y = 1;
         }
-        //life count text
         textGroup = game.add.group();
-        lifeText = game.make.text(0, 0, 'life count: ' + lifeCount, {fill: '#ffffff'});
-        textGroup.add(lifeText);
+        lifeText = game.make.text(0, 0, 'life count: ' + lifeCount, textStyle);
+        textGroup.add(lifeText);    
     },
 
 
@@ -104,8 +103,13 @@ lvl1.prototype = {
         dude.body.x = 0;
         dude.body.y = game.world.height - dude.body.height;
         lifeCount--;
+        if (lifeCount == 0) {
+            // Game over
+            game.destroy();
+            return;
+        }
         textGroup.remove(lifeText);
-        lifeText = game.make.text(0, 0, 'life count: ' + lifeCount, {fill: '#ffffff'});
+        lifeText = game.make.text(0, 0, 'life count: ' + lifeCount, textStyle);
         textGroup.add(lifeText);
     },
 
