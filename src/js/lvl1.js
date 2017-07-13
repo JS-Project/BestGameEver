@@ -2,6 +2,7 @@ lvl1 = function(game) {
 
 };
 
+var lifeCount = 3, textGroup, lifeText;
 var dudeSpriteHeight = 48.0, dudeSpriteWidth = 32.0;
 var dudeHeight = 24.0, dudeWidth = 16.0;
 var borderSize = 16;
@@ -89,6 +90,10 @@ lvl1.prototype = {
             invaders[i].body.bounce.x = 1;
             invaders[i].body.bounce.y = 1;
         }
+        //life count text
+        textGroup = game.add.group();
+        lifeText = game.make.text(0, 0, 'life count: ' + lifeCount, {fill: '#ffffff'});
+        textGroup.add(lifeText);
     },
 
 
@@ -98,6 +103,10 @@ lvl1.prototype = {
         trail = [];
         dude.body.x = 0;
         dude.body.y = game.world.height - dude.body.height;
+        lifeCount--;
+        textGroup.remove(lifeText);
+        lifeText = game.make.text(0, 0, 'life count: ' + lifeCount, {fill: '#ffffff'});
+        textGroup.add(lifeText);
     },
 
     trailIntersect: function(dude, singleTrail) {
