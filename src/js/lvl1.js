@@ -13,10 +13,11 @@ var trailGroup;
 var dudeCenterGroup, dudeCenter;
 var invaders = [];
 var invaderSize = 16.0;
-var invaderCount = 0;
+var invaderCount = 1;
 var trail = [];
 var borderGroup;
 var borders = [];
+var totalArea;
 
 lvl1.prototype = {
 
@@ -34,6 +35,7 @@ lvl1.prototype = {
     create: function() {
 
     	game.physics.startSystem(Phaser.Physics.ARCADE);
+        totalArea = game.world.height * game.world.width - 2 * game.world.height * borderSize - 2 * (game.world.width - 2 * borderSize) * borderSize;
 
         borderGroup = game.add.group();
         borderGroup.enableBody = true;
@@ -71,11 +73,9 @@ lvl1.prototype = {
         dudeCenterGroup = game.add.group();
         dudeCenterGroup.enableBody = true;
 
-        dudeCenter = dudeCenterGroup.create(dude.body.x + dudeWidth / 2.0, dude.body.y + dudeHeight / 2.0 - 1);
+        dudeCenter = dudeCenterGroup.create(borderSize, game.world.height - borderSize - 1);
         dudeCenter.body.height = 1.0;
         dudeCenter.body.width = 1.0;
-
-        console.log(dudeCenter.body.x);
 
         for (i = 0; i < invaderCount; i++) {
             if (Math.random() < 0.5)
@@ -114,12 +114,13 @@ lvl1.prototype = {
         textGroup.add(lifeText);
     },
 
-    trailIntersect: function(dude, singleTrail) {
+    trailIntersect: function(dudeCenter, singleTrail) {
         for (i = 0; i < trail.length; i++) {
             if (trail[i] == singleTrail) {
                 if (i < trail.length) {
-                    for (j = i; j < trail.length; j++)
+                    for (j = i; j < trail.length; j++) {
                         trail[j].kill();
+                    }
                     trail.length = i;
                     break;
                 }
@@ -131,14 +132,36 @@ lvl1.prototype = {
 
     dudeAtTheWall: function(dudeCenter, border) {
         dude.body.x = dudeCenter.body.x - dudeWidth / 2.0;
-        dude.body.y = dudeCenter.body.y - dudeHeight / 2.0
-        if (trail.length > 8) {
-
+        dude.body.y = dudeCenter.body.y - dudeHeight / 2.0;
+        dude.body.velocity.x = 0;
+        dude.body.velocity.y = 0;
+        var ends = [];
+        if (trail.length == 0)
+            return;
+        for (i = 1; i < trail.length - 1; i++) {
+            if ((trail[i].body.x == trail[i - 1].body.x && trail[i].body.x == trail[i + 1].body.x) || 
+                (trail[i].body.y == trail[i - 1].body.y && trail[i].body.y == trail[i + 1].body.y))
+                continue;
+            else
+                ends.push(trail[i]);
         }
-        if (trail.length > 0) {
-            for (i = 0; i < trail.length; i++)
-                trail[i].kill();
-            trail = [];
+        ends.push(trail[trail.length - 1]);
+        for (i = 0; i < trail.length; i++) {
+            trail[i].kill();
+        }
+        trail = [];
+        for (i = 0; i < ends.length - 1; i++) {
+            var first = i;
+            var second = i + 1;
+            if ((ends[i].body.x == ends[i + 1].body.x && ends[i].body.y > ends[i + 1].body.y) || 
+                (ends[i].body.y == ends[i + 1].body.y && ends[i].body.x > ends[i + 1].body.x)) {
+                first = i + 1;
+                second = i;
+            }
+            var newBorder = borderGroup.create(ends[first].x, ends[first].y, 'border');
+            newBorder.scale.setTo(getDist(ends[first], ends[second]) + 2, 2);
+            newBorder.body.immovable = true;
+            borders.push(newBorder);
         }
     },
 
@@ -149,7 +172,7 @@ lvl1.prototype = {
 
         game.physics.arcade.overlap(trailGroup, invaderGroup, this.collision, null, this);
         game.physics.arcade.overlap(dudeCenterGroup, trailGroup, this.trailIntersect, null, this);
-        game.physics.arcade.collide(dudeCenter, borderGroup, this.dudeAtTheWall, null, this);
+        game.physics.arcade.collide(dudeCenterGroup, borderGroup, this.dudeAtTheWall, null, this);
         game.physics.arcade.collide(invaderGroup, borderGroup);
 
         dude.body.velocity.x = 0;
@@ -189,10 +212,23 @@ lvl1.prototype = {
                 dudeCenter.body.y == borderSize || dudeCenter.body.y == game.world.height - borderSize - 1) {
             return;
         }
-        var cur = trailGroup.create(dudeCenter.body.x, dudeCenter.body.y,  'trail');
+        var cur = trailGroup.create(dudeCenter.body.x, dudeCenter.body.y, 'trail');
         cur.scale.setTo(2, 2);
         trail.push(cur);
     }
 };
+
+function getArea(points) {
+    var doubleArea = 0;
+    for (i = 0; i < points.length; i++) {
+        doubleArea += points[i].body.x * points[(i + 1) % points.length].body.y - points[i].body.y * points[(i + 1) % points.length].body.x;
+    }
+    return Math.abs(doubleArea) * 0.5;
+}
+
+function getDist(first, second) {
+    return Math.sqrt((first.body.x - second.body.x) * (first.body.x - second.body.x) + 
+        (first.body.y - second.body.y) * (first.body.y - second.body.y));
+}
 
 
