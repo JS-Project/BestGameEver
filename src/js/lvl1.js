@@ -5,7 +5,7 @@ lvl1 = function(game) {
 var lifeCount = 3, textGroup, lifeText, textStyle = {font: "15pt Arial", fill: '#ffffff'};
 var dudeSpriteHeight = 48.0, dudeSpriteWidth = 32.0;
 var dudeHeight = 24.0, dudeWidth = 16.0;
-var borderSize = 0;
+var borderSize = 8.0;
 var dude;
 var cursors;
 var invaderGroup;
@@ -13,8 +13,7 @@ var trailGroup;
 var dudeCenterGroup, dudeCenter;
 var invaders = [];
 var invaderSize = 16.0;
-var invaderCount = 4;
-var trailHeight = 8;
+var invaderCount = 0;
 var trail = [];
 var borderGroup;
 var borders = [];
@@ -26,7 +25,7 @@ lvl1.prototype = {
     	game.load.spritesheet('dude', 'assets/images/dude.png', dudeSpriteWidth, dudeSpriteHeight);
         game.load.image('invader1', 'assets/images/invader1.png');
         game.load.image('invader2', 'assets/images/invader2.png');
-        game.load.image('border', 'assets/images/border.png');
+        game.load.image('border', 'assets/images/1x1_blue.png');
         game.load.image('trail', 'assets/images/1x1_red.png')
 
         cursors = game.input.keyboard.createCursorKeys();
@@ -36,24 +35,28 @@ lvl1.prototype = {
 
     	game.physics.startSystem(Phaser.Physics.ARCADE);
 
-        // borderGroup = game.add.group();
-        // borderGroup.enableBody = true;
-        // borders.push(borderGroup.create(0, game.world.height - borderSize, 'border'));
-        // borders[0].scale.setTo(game.world.width / (borderSize / 600.0), borderSize / 600.0);
+        borderGroup = game.add.group();
+        borderGroup.enableBody = true;
+        borders.push(borderGroup.create(0, game.world.height - borderSize, 'border'));
+        borders[0].scale.setTo(game.world.width, borderSize);
 
-        // borders.push(borderGroup.create(0, 0, 'border'));
-        // borders[1].scale.setTo(game.world.width / (borderSize / 600.0), borderSize / 600.0);
+        borders.push(borderGroup.create(0, 0, 'border'));
+        borders[1].scale.setTo(game.world.width, borderSize);
         
-        // borders.push(borderGroup.create(0, 0, 'border'));
-        // borders[2].scale.setTo(borderSize / 600.0, game.world.height / (borderSize / 600.0));
+        borders.push(borderGroup.create(0, 0, 'border'));
+        borders[2].scale.setTo(borderSize, game.world.height);
 
-        // borders.push(borderGroup.create(game.world.width - borderSize, 0, 'border'));
-        // borders[3].scale.setTo(borderSize / 600.0, game.world.height / (borderSize / 600.0));
+        borders.push(borderGroup.create(game.world.width - borderSize, 0, 'border'));
+        borders[3].scale.setTo(borderSize, game.world.height);
 
-        dude = game.add.sprite(0, game.world.height - dudeHeight / 2.0, 'dude');
+        for (i = 0; i < 4; i++)
+            borders[i].body.immovable = true;
+        //align dudecenter with border
+        dude = game.add.sprite(borderSize - dudeWidth / 2.0, game.world.height - borderSize - dudeHeight / 2.0, 'dude');
+
         dude.enableBody = true;
         game.physics.arcade.enable(dude);
-        dude.body.collideWorldBounds = true;
+        dude.body.collideWorldBounds = false;
         dude.scale.setTo(dudeHeight / dudeSpriteHeight, dudeWidth / dudeSpriteWidth);
 
         dude.animations.add('left', [0, 1, 2 ,3], 10, true);
@@ -68,17 +71,17 @@ lvl1.prototype = {
         dudeCenterGroup = game.add.group();
         dudeCenterGroup.enableBody = true;
 
-        dudeCenter = dudeCenterGroup.create(dude.body.x + dudeWidth / 2.0, dude.body.y + dudeHeight / 2.0);
+        dudeCenter = dudeCenterGroup.create(dude.body.x + dudeWidth / 2.0, dude.body.y + dudeHeight / 2.0 - 1);
         dudeCenter.body.height = 1.0;
         dudeCenter.body.width = 1.0;
 
-        for (i = 0; i < invaderCount; i++) {
+        console.log(dudeCenter.body.x);
 
+        for (i = 0; i < invaderCount; i++) {
             if (Math.random() < 0.5)
                 invaders.push(invaderGroup.create(game.world.width / (invaderCount + 1.0) * (i + 1), borderSize, 'invader1'));
             else
                 invaders.push(invaderGroup.create(game.world.width / (invaderCount + 1.0) * (i + 1), borderSize, 'invader2'));
-
             invaders[i].scale.setTo(invaderSize / 600.0, invaderSize / 600.0);
             invaders[i].body.collideWorldBounds = true;
             invaders[i].body.velocity.x = 50 + 50 * Math.random();
@@ -114,7 +117,7 @@ lvl1.prototype = {
     trailIntersect: function(dude, singleTrail) {
         for (i = 0; i < trail.length; i++) {
             if (trail[i] == singleTrail) {
-                if (i < trail.length - 4) {
+                if (i < trail.length) {
                     for (j = i; j < trail.length; j++)
                         trail[j].kill();
                     trail.length = i;
@@ -126,6 +129,19 @@ lvl1.prototype = {
         }
     },
 
+    dudeAtTheWall: function(dudeCenter, border) {
+        dude.body.x = dudeCenter.body.x - dudeWidth / 2.0;
+        dude.body.y = dudeCenter.body.y - dudeHeight / 2.0
+        if (trail.length > 8) {
+
+        }
+        if (trail.length > 0) {
+            for (i = 0; i < trail.length; i++)
+                trail[i].kill();
+            trail = [];
+        }
+    },
+
     update: function() {
 
         dudeCenter.body.x = dude.body.x + dudeWidth / 2.0;
@@ -133,6 +149,8 @@ lvl1.prototype = {
 
         game.physics.arcade.overlap(trailGroup, invaderGroup, this.collision, null, this);
         game.physics.arcade.overlap(dudeCenterGroup, trailGroup, this.trailIntersect, null, this);
+        game.physics.arcade.collide(dudeCenter, borderGroup, this.dudeAtTheWall, null, this);
+        game.physics.arcade.collide(invaderGroup, borderGroup);
 
         dude.body.velocity.x = 0;
         dude.body.velocity.y = 0;
@@ -167,18 +185,12 @@ lvl1.prototype = {
     },
 
     updateTrail: function() {
-        if (dude.body.x == 0 || dude.body.x == game.world.width - dude.body.width || 
-                dude.body.y == 0 || dude.body.y == game.world.height - dude.body.height) {
-            if (trail.length > 0) {
-                for (i = 0; i < trail.length; i++)
-                    trail[i].kill();
-
-                trail = [];
-            }
+        if (dudeCenter.body.x == borderSize || dudeCenter.body.x == game.world.width - borderSize - 1 || 
+                dudeCenter.body.y == borderSize || dudeCenter.body.y == game.world.height - borderSize - 1) {
             return;
         }
-        var cur = trailGroup.create(dudeCenter.body.x, dudeCenter.body.y, 'trail');
-        cur.scale.setTo(2.0, 2.0); 
+        var cur = trailGroup.create(dudeCenter.body.x, dudeCenter.body.y,  'trail');
+        cur.scale.setTo(2, 2);
         trail.push(cur);
     }
 };
