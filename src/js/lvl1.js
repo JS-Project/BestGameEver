@@ -5,7 +5,7 @@ lvl1 = function(game) {
 var lifeCount = 3, textGroup, lifeText, textStyle = {font: "15pt Arial", fill: '#ffffff'};
 var dudeSpriteHeight = 48.0, dudeSpriteWidth = 32.0;
 var dudeHeight = 24.0, dudeWidth = 16.0;
-var borderSize = 8.0;
+var borderSize = 8.0, trailSize = 2.0;
 var dudeStartX, dudeStartY;
 var dude;
 var cursors;
@@ -42,16 +42,22 @@ lvl1.prototype = {
         borderGroup = game.add.group();
         borderGroup.enableBody = true;
         borders.push(borderGroup.create(0, game.world.height - borderSize, 'border'));
-        borders[0].scale.setTo(game.world.width, borderSize);
+        borders[0].width = game.world.width;
+        borders[0].height = borderSize;
 
+        //borders[0].scale.setTo(game.world.width, borderSize);
+        console.log(borders[0].body.width);console.log(borders[0].width);
         borders.push(borderGroup.create(0, 0, 'border'));
-        borders[1].scale.setTo(game.world.width, borderSize);
+        borders[1].width = game.world.width;
+        borders[1].height = borderSize;
         
         borders.push(borderGroup.create(0, 0, 'border'));
-        borders[2].scale.setTo(borderSize, game.world.height);
+        borders[2].width = borderSize;
+        borders[2].height = game.world.height;
 
         borders.push(borderGroup.create(game.world.width - borderSize, 0, 'border'));
-        borders[3].scale.setTo(borderSize, game.world.height);
+        borders[3].width = borderSize;
+        borders[3].height = game.world.height;
 
         for (i = 0; i < 4; i++)
             borders[i].body.immovable = true;
@@ -78,8 +84,8 @@ lvl1.prototype = {
         dudeCenterGroup.enableBody = true;
 
         dudeCenter = dudeCenterGroup.create(borderSize, game.world.height - borderSize - 1);
-        dudeCenter.body.height = 1.0;
-        dudeCenter.body.width = 1.0;
+        dudeCenter.height = 1.0;
+        dudeCenter.width = 1.0;
 
         for (i = 0; i < invaderCount; i++) {
             if (Math.random() < 0.5)
@@ -105,6 +111,9 @@ lvl1.prototype = {
 
     collision: function(singleTrail, invader) {
         isDead = true;
+        for (i = 4; i < borders.length; i++)
+            borders[i].kill();
+        borders.length = 4;
         for (i = 0; i < trail.length; i++)
             trail[i].kill();
         trail = [];
@@ -143,6 +152,12 @@ lvl1.prototype = {
         var ends = [];
         if (trail.length == 0)
             return;
+        var newStart = this.getNearestPointOnBorder(trail[0], 'trail');
+        var newEnd = this.getNearestPointOnBorder(trail[trail.length - 1], 'trail');
+        trail[0].kill();
+        trail[trail.length - 1].kill();
+        trail[0] = newStart;
+        trail[trail.length - 1] = newEnd;
         ends.push(trail[0]);
         for (i = 1; i < trail.length - 1; i++) {
             if ((trail[i].body.x == trail[i - 1].body.x && trail[i].body.x == trail[i + 1].body.x) || 
@@ -160,17 +175,17 @@ lvl1.prototype = {
             //console.log(ends[i].body.x + " " + ends[i].body.y);
             var first = i;
             var second = i + 1;
-            var height, width;
             if ((ends[i].body.x == ends[i + 1].body.x && ends[i].body.y > ends[i + 1].body.y) || 
                 (ends[i].body.y == ends[i + 1].body.y && ends[i].body.x > ends[i + 1].body.x)) {
                 first = i + 1;
                 second = i;
             }
             var newBorder = borderGroup.create(ends[first].x, ends[first].y, 'border');
-            newBorder.scale.setTo(Math.abs(ends[i].body.x - ends[i + 1].body.x) + 2, Math.abs(ends[i].body.y - ends[i + 1].body.y) + 2);
+            newBorder.scale.setTo(Math.abs(ends[i].body.x - ends[i + 1].body.x) + trailSize, Math.abs(ends[i].body.y - ends[i + 1].body.y) + trailSize);
             newBorder.body.immovable = true;
             borders.push(newBorder);
         }
+        console.log(trail.length + " " + ends.length + " " + borders.length);
         //console.log(ends[ends.length - 1].body.x + " " + ends[ends.length - 1].body.y);
     },
 
@@ -221,9 +236,45 @@ lvl1.prototype = {
             return;
         }
         var cur = trailGroup.create(dudeCenter.body.x, dudeCenter.body.y, 'trail');
-        cur.scale.setTo(2, 2);
+        cur.scale.setTo(trailSize, trailSize);
         trail.push(cur);
+    },
+
+    //returns nearest point, which belongs to any border
+    getNearestPointOnBorder: function(point, group) {
+        var bestDist = 20000000;
+        var ans;
+        var x, y;
+        for (i = 0; i < borders.length; i++) {
+            if (borders[i].width == trailSize || i == 2 || i == 3) { //vertical border
+                if (point.body.y >= borders[i].body.y && point.body.y <= borders[i].body.y + borders[i].height) {
+                    if (Math.abs(point.body.x - borders[i].body.x) < bestDist) {
+                        bestDist = Math.abs(point.body.x - borders[i].body.x);
+                        x = borders[i].body.x;
+                        y = point.body.y;
+                    }
+                }
+            } else { //horizontal border
+                if (point.body.x >= borders[i].body.x && point.body.x <= borders[i].body.x + borders[i].width) {
+                    if (Math.abs(point.body.y - borders[i].body.y) < bestDist) {
+                        bestDist = Math.abs(point.body.y - borders[i].body.y);
+                        x = point.body.x;
+                        y = borders[i].body.y;
+                    }
+                }
+            }
+        }
+
+        if (group == 'trail') {
+            ans = trailGroup.create(x, y, 'trail');
+        } else if (group == 'border') {
+            ans = borderGroup.create(x, y, 'border');
+        }
+        ans.scale.setTo(trailSize, trailSize);
+        return ans;
     }
+
+
 };
 
 function getArea(points) {
@@ -238,5 +289,4 @@ function getDist(first, second) {
     return Math.sqrt((first.body.x - second.body.x) * (first.body.x - second.body.x) + 
         (first.body.y - second.body.y) * (first.body.y - second.body.y));
 }
-
 
