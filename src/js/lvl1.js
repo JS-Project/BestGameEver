@@ -6,6 +6,7 @@ var lifeCount = 3, textGroup, lifeText, textStyle = {font: "15pt Arial", fill: '
 var dudeSpriteHeight = 48.0, dudeSpriteWidth = 32.0;
 var dudeHeight = 24.0, dudeWidth = 16.0;
 var borderSize = 8.0;
+var dudeStartX, dudeStartY;
 var dude;
 var cursors;
 var invaderGroup;
@@ -17,6 +18,7 @@ var invaderCount = 1;
 var trail = [];
 var borderGroup;
 var borders = [];
+var isDead;
 var totalArea;
 
 lvl1.prototype = {
@@ -54,7 +56,9 @@ lvl1.prototype = {
         for (i = 0; i < 4; i++)
             borders[i].body.immovable = true;
         //align dudecenter with border
-        dude = game.add.sprite(borderSize - dudeWidth / 2.0, game.world.height - borderSize - dudeHeight / 2.0, 'dude');
+        dudeStartX = borderSize - dudeWidth / 2.0;
+        dudeStartY = game.world.height - borderSize - dudeHeight / 2.0;
+        dude = game.add.sprite(dudeStartX, dudeStartY, 'dude');
 
         dude.enableBody = true;
         game.physics.arcade.enable(dude);
@@ -100,11 +104,12 @@ lvl1.prototype = {
 
 
     collision: function(singleTrail, invader) {
+        isDead = true;
         for (i = 0; i < trail.length; i++)
             trail[i].kill();
         trail = [];
-        dude.body.x = 0;
-        dude.body.y = game.world.height - dude.body.height;
+        dude.body.x = dudeStartX;
+        dude.body.y = dudeStartY;
         lifeCount--;
         if (lifeCount == 0) {
             // Game over
@@ -138,6 +143,7 @@ lvl1.prototype = {
         var ends = [];
         if (trail.length == 0)
             return;
+        ends.push(trail[0]);
         for (i = 1; i < trail.length - 1; i++) {
             if ((trail[i].body.x == trail[i - 1].body.x && trail[i].body.x == trail[i + 1].body.x) || 
                 (trail[i].body.y == trail[i - 1].body.y && trail[i].body.y == trail[i + 1].body.y))
@@ -151,33 +157,35 @@ lvl1.prototype = {
         }
         trail = [];
         for (i = 0; i < ends.length - 1; i++) {
+            //console.log(ends[i].body.x + " " + ends[i].body.y);
             var first = i;
             var second = i + 1;
+            var height, width;
             if ((ends[i].body.x == ends[i + 1].body.x && ends[i].body.y > ends[i + 1].body.y) || 
                 (ends[i].body.y == ends[i + 1].body.y && ends[i].body.x > ends[i + 1].body.x)) {
                 first = i + 1;
                 second = i;
             }
             var newBorder = borderGroup.create(ends[first].x, ends[first].y, 'border');
-            newBorder.scale.setTo(getDist(ends[first], ends[second]) + 2, 2);
+            newBorder.scale.setTo(Math.abs(ends[i].body.x - ends[i + 1].body.x) + 2, Math.abs(ends[i].body.y - ends[i + 1].body.y) + 2);
             newBorder.body.immovable = true;
             borders.push(newBorder);
         }
+        //console.log(ends[ends.length - 1].body.x + " " + ends[ends.length - 1].body.y);
     },
 
     update: function() {
-
         dudeCenter.body.x = dude.body.x + dudeWidth / 2.0;
         dudeCenter.body.y = dude.body.y + dudeHeight / 2.0;
-
+        dude.body.velocity.x = 0;
+        dude.body.velocity.y = 0;
+        isDead = false;
         game.physics.arcade.overlap(trailGroup, invaderGroup, this.collision, null, this);
         game.physics.arcade.overlap(dudeCenterGroup, trailGroup, this.trailIntersect, null, this);
         game.physics.arcade.collide(dudeCenterGroup, borderGroup, this.dudeAtTheWall, null, this);
         game.physics.arcade.collide(invaderGroup, borderGroup);
-
-        dude.body.velocity.x = 0;
-        dude.body.velocity.y = 0;
-
+        if (isDead)
+            return;
         if (cursors.left.isDown)
         {
             dude.body.velocity.x = -150;
