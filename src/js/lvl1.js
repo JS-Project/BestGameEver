@@ -2,10 +2,10 @@ lvl1 = function(game) {
 
 };
 
-var lifeCount = 3, textGroup, lifeText, textStyle = {font: "15pt Arial", fill: '#ffffff'};
+var lifeCount = 1, textGroup, lifeText, textStyle = {font: "15pt Arial", fill: '#ffffff'};
 var dudeSpriteHeight = 48.0, dudeSpriteWidth = 32.0;
 var dudeHeight = 24.0, dudeWidth = 16.0;
-var borderSize = 8.0, trailSize = 2.0;
+var borderSize = 2.0, trailSize = 2.0;
 var dudeStartX, dudeStartY;
 var dude;
 var cursors;
@@ -121,7 +121,13 @@ lvl1.prototype = {
         dude.body.y = dudeStartY;
         lifeCount--;
         if (lifeCount == 0) {
-            // Game over
+            for (i = 0; i < borders.length; i++)
+                borders[i].kill();
+            dude.kill();
+            textGroup.remove(lifeText);
+            lifeText = game.make.text(game.world.width / 2.0 - 60, game.world.height / 2.0 - 3, 'Game Over', textStyle);
+            textGroup.add(lifeText);
+            return;
         }
         textGroup.remove(lifeText);
         lifeText = game.make.text(0, 0, 'life count: ' + lifeCount, textStyle);
@@ -185,11 +191,12 @@ lvl1.prototype = {
             newBorder.body.immovable = true;
             borders.push(newBorder);
         }
-        console.log(trail.length + " " + ends.length + " " + borders.length);
         //console.log(ends[ends.length - 1].body.x + " " + ends[ends.length - 1].body.y);
     },
 
     update: function() {
+        if (lifeCount == 0)
+            return;
         dudeCenter.body.x = dude.body.x + dudeWidth / 2.0;
         dudeCenter.body.y = dude.body.y + dudeHeight / 2.0;
         dude.body.velocity.x = 0;
