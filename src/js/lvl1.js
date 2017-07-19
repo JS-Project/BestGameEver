@@ -158,36 +158,36 @@ lvl1.prototype = {
         var ends = [];
         if (trail.length == 0)
             return;
-        var newStart = this.getNearestPointOnBorder(trail[0], 'trail');
-        var newEnd = this.getNearestPointOnBorder(trail[trail.length - 1], 'trail');
+        var newStart = this.getNearestPointOnBorder(trail[0]);
+        var newEnd = this.getNearestPointOnBorder(trail[trail.length - 1]);
         trail[0].kill();
         trail[trail.length - 1].kill();
-        trail[0] = newStart;
-        trail[trail.length - 1] = newEnd;
-        ends.push(trail[0]);
+        trail[0] = trailGroup.create(newStart.x, newStart.y, 'trail');
+        trail[trail.length - 1] = trailGroup.create(newEnd.x, newEnd.y, 'trail');
+        ends.push(newStart);
         for (i = 1; i < trail.length - 1; i++) {
             if ((trail[i].body.x == trail[i - 1].body.x && trail[i].body.x == trail[i + 1].body.x) || 
                 (trail[i].body.y == trail[i - 1].body.y && trail[i].body.y == trail[i + 1].body.y))
                 continue;
             else
-                ends.push(trail[i]);
+                ends.push(new Phaser.Point(trail[i].x, trail[i].y));
         }
-        ends.push(trail[trail.length - 1]);
+        ends.push(newEnd);
         for (i = 0; i < trail.length; i++) {
             trail[i].kill();
         }
         trail = [];
         for (i = 0; i < ends.length - 1; i++) {
-            //console.log(ends[i].body.x + " " + ends[i].body.y);
             var first = i;
             var second = i + 1;
-            if ((ends[i].body.x == ends[i + 1].body.x && ends[i].body.y > ends[i + 1].body.y) || 
-                (ends[i].body.y == ends[i + 1].body.y && ends[i].body.x > ends[i + 1].body.x)) {
+            if ((ends[i].x == ends[i + 1].x && ends[i].y > ends[i + 1].y) || 
+                (ends[i].y == ends[i + 1].y && ends[i].x > ends[i + 1].x)) {
                 first = i + 1;
                 second = i;
             }
             var newBorder = borderGroup.create(ends[first].x, ends[first].y, 'border');
-            newBorder.scale.setTo(Math.abs(ends[i].body.x - ends[i + 1].body.x) + trailSize, Math.abs(ends[i].body.y - ends[i + 1].body.y) + trailSize);
+            newBorder.scale.setTo(Math.abs(ends[i].x - ends[i + 1].x) + trailSize, 
+                Math.abs(ends[i].y - ends[i + 1].y) + trailSize);
             newBorder.body.immovable = true;
             borders.push(newBorder);
         }
@@ -202,9 +202,9 @@ lvl1.prototype = {
         dude.body.velocity.x = 0;
         dude.body.velocity.y = 0;
         isDead = false;
+        game.physics.arcade.collide(dudeCenterGroup, borderGroup, this.dudeAtTheWall, null, this);
         game.physics.arcade.overlap(trailGroup, invaderGroup, this.collision, null, this);
         game.physics.arcade.overlap(dudeCenterGroup, trailGroup, this.trailIntersect, null, this);
-        game.physics.arcade.collide(dudeCenterGroup, borderGroup, this.dudeAtTheWall, null, this);
         game.physics.arcade.collide(invaderGroup, borderGroup);
         if (isDead)
             return;
@@ -238,7 +238,9 @@ lvl1.prototype = {
     },
 
     updateTrail: function() {
-        if (dudeCenter.body.x == borderSize || dudeCenter.body.x == game.world.width - borderSize - 1 || 
+        var point = this.getNearestPointOnBorder(dudeCenter);
+        if (Phaser.Math.fuzzyLessThan(getDist(new Phaser.Point(dudeCenter.body.x, dudeCenter.body.y), point), 2, 3) 
+                || dudeCenter.body.x == borderSize || dudeCenter.body.x == game.world.width - borderSize - 1 || 
                 dudeCenter.body.y == borderSize || dudeCenter.body.y == game.world.height - borderSize - 1) {
             return;
         }
@@ -248,36 +250,30 @@ lvl1.prototype = {
     },
 
     //returns nearest point, which belongs to any border
-    getNearestPointOnBorder: function(point, group) {
+    getNearestPointOnBorder: function(point) {
         var bestDist = 20000000;
         var ans;
         var x, y;
         for (i = 0; i < borders.length; i++) {
             if (borders[i].width == trailSize || i == 2 || i == 3) { //vertical border
-                if (point.body.y >= borders[i].body.y && point.body.y <= borders[i].body.y + borders[i].height) {
-                    if (Math.abs(point.body.x - borders[i].body.x) < bestDist) {
-                        bestDist = Math.abs(point.body.x - borders[i].body.x);
+                if (point.y >= borders[i].body.y && point.y <= borders[i].body.y + borders[i].height) {
+                    if (Math.abs(point.x - borders[i].body.x) < bestDist) {
+                        bestDist = Math.abs(point.x - borders[i].body.x);
                         x = borders[i].body.x;
-                        y = point.body.y;
+                        y = point.y;
                     }
                 }
             } else { //horizontal border
-                if (point.body.x >= borders[i].body.x && point.body.x <= borders[i].body.x + borders[i].width) {
-                    if (Math.abs(point.body.y - borders[i].body.y) < bestDist) {
-                        bestDist = Math.abs(point.body.y - borders[i].body.y);
-                        x = point.body.x;
+                if (point.x >= borders[i].body.x && point.x <= borders[i].body.x + borders[i].width) {
+                    if (Math.abs(point.y - borders[i].body.y) < bestDist) {
+                        bestDist = Math.abs(point.y - borders[i].body.y);
+                        x = point.x;
                         y = borders[i].body.y;
                     }
                 }
             }
         }
-
-        if (group == 'trail') {
-            ans = trailGroup.create(x, y, 'trail');
-        } else if (group == 'border') {
-            ans = borderGroup.create(x, y, 'border');
-        }
-        ans.scale.setTo(trailSize, trailSize);
+        ans = new Phaser.Point(x, y);
         return ans;
     }
 
@@ -287,13 +283,13 @@ lvl1.prototype = {
 function getArea(points) {
     var doubleArea = 0;
     for (i = 0; i < points.length; i++) {
-        doubleArea += points[i].body.x * points[(i + 1) % points.length].body.y - points[i].body.y * points[(i + 1) % points.length].body.x;
+        doubleArea += points[i].x * points[(i + 1) % points.length].y - points[i].y * points[(i + 1) % points.length].x;
     }
     return Math.abs(doubleArea) * 0.5;
 }
 
 function getDist(first, second) {
-    return Math.sqrt((first.body.x - second.body.x) * (first.body.x - second.body.x) + 
-        (first.body.y - second.body.y) * (first.body.y - second.body.y));
+    return Math.sqrt((first.x - second.x) * (first.x - second.x) + 
+        (first.y - second.y) * (first.y - second.y));
 }
 
