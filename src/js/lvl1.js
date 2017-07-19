@@ -45,8 +45,6 @@ lvl1.prototype = {
         borders[0].width = game.world.width;
         borders[0].height = borderSize;
 
-        //borders[0].scale.setTo(game.world.width, borderSize);
-        console.log(borders[0].body.width);console.log(borders[0].width);
         borders.push(borderGroup.create(0, 0, 'border'));
         borders[1].width = game.world.width;
         borders[1].height = borderSize;
@@ -160,10 +158,13 @@ lvl1.prototype = {
             return;
         var newStart = this.getNearestPointOnBorder(trail[0]);
         var newEnd = this.getNearestPointOnBorder(trail[trail.length - 1]);
-        trail[0].kill();
-        trail[trail.length - 1].kill();
-        trail[0] = trailGroup.create(newStart.x, newStart.y, 'trail');
-        trail[trail.length - 1] = trailGroup.create(newEnd.x, newEnd.y, 'trail');
+        trail.splice(0, 0, trailGroup.create(newStart.x, newStart.y, 'trail'));
+        trail.push(trailGroup.create(newEnd.x, newEnd.y, 'trail'));
+        // trail[0].kill();
+        // trail[trail.length - 1].kill();
+        // trail[0] = trailGroup.create(newStart.x, newStart.y, 'trail');
+        // trail[trail.length - 1] = trailGroup.create(newEnd.x, newEnd.y, 'trail');
+
         ends.push(newStart);
         for (i = 1; i < trail.length - 1; i++) {
             if ((trail[i].body.x == trail[i - 1].body.x && trail[i].body.x == trail[i + 1].body.x) || 
@@ -177,6 +178,7 @@ lvl1.prototype = {
             trail[i].kill();
         }
         trail = [];
+        var newBorderStartIndex = borders.length;
         for (i = 0; i < ends.length - 1; i++) {
             var first = i;
             var second = i + 1;
@@ -191,7 +193,141 @@ lvl1.prototype = {
             newBorder.body.immovable = true;
             borders.push(newBorder);
         }
+        var newBorderEndIndex = borders.length - 1;
+        var dir = (ends[ends.length - 2].x < ends[ends.length - 1].x || 
+            (ends[ends.length - 2].x >= ends[ends.length - 1].x && ends[ends.length - 2].y < ends[ends.length - 1].y));
+        var curPoint = ends[ends.length - 1];
+        var oldIndex = borders.length - 1;
+        var curIndex = this.getBorderIndex(curPoint, oldIndex);
+        if (borders[borders.length - 1].width == borderSize) {//vertical
+            dir = !dir;
+        }
+        console.log(borders[curIndex].x + " " + borders[curIndex].y + " " + borders[curIndex].width + " " + borders[curIndex].height);
+        while (true) {
+            break;
+            var newBorder;
+            if (borders[curIndex].width == borderSize) {//vertical
+                if (dir) {
+                    var startY = borders[oldIndex].y;
+                    var endY = borders[curIndex].y + borders[curIndex].height;
+                    newBorder = this.getBorderForVerticalSegment(startY, endY, borders[curIndex].x, false, curIndex, oldIndex);
+                    dir = true;
+                    if (newBorder == -1) {
+                        newBorder = this.getBorderIndex(new Phaser.Point(borders[curIndex].x, borders[curIndex].y + borders[curIndex].height), curIndex);
+                        dir = true;
+                    }
+                } else {
+                    var endY = borders[oldIndex].y;
+                    var startY = borders[curIndex].y;
+                    newBorder = this.getBorderForVerticalSegment(startY, endY, borders[curIndex].x, true, curIndex, oldIndex);
+                    dir = false;
+                    if (newBorder == -1) {
+                        newBorder = this.getBorderIndex(new Phaser.Point(borders[curIndex].x, borders[curIndex].y, curIndex));
+                        dir = false;
+                    }
+                }
+                console.log("Y - " + startY, endY);
+            } else {//horizontal
+                if (dir) {
+                    var startX = borders[curIndex].x;
+                    var endX = borders[oldIndex].x;
+                    newBorder = this.getBorderForHorizontalSegment(endX, startX, borders[curIndex].y, false, curIndex, oldIndex);
+                    dir = true;
+                    if (newBorder == -1) {
+                        newBorder = this.getBorderIndex(new Phaser.Point(borders[curIndex].x, borders[curIndex].y), curIndex);
+                        dir = true;
+                    }
+                } else {
+                    var startX = borders[oldIndex].x;
+                    var endX = borders[curIndex].x + borders[curIndex].width;
+                    newBorder = this.getBorderForHorizontalSegment(startX, endX, borders[curIndex].y, true, curIndex, oldIndex);
+                    dir = false;
+                    if (newBorder == -1) {
+                        newBorder = this.getBorderIndex(new Phaser.Point(borders[curIndex].x + borders[curIndex].width, borders[curIndex].y), curIndex);
+                        dir = false;
+                    }
+                }
+                console.log("X - " + startX, endX);
+            }
+            oldIndex = curIndex;
+            curIndex = newBorder;
+            if (curIndex == -1) {
+                console.log("-1");
+                break;
+            }
+            console.log(dir);
+            console.log(curIndex);
+            console.log(borders[curIndex].x + " " + borders[curIndex].y + " " + borders[curIndex].width + " " + borders[curIndex].height);
+            console.log("--------------");
+            if (curIndex >= newBorderStartIndex)
+                break; 
+        }
         //console.log(ends[ends.length - 1].body.x + " " + ends[ends.length - 1].body.y);
+    },
+
+    getBorderForHorizontalSegment: function(startX, endX, y, greater, otherIndex1, otherIndex2) {
+        var segment = new Phaser.Line(startX, y, endX, y);
+        console.log(segment);
+        var ans = -1, dist = 2000000, index = -1;
+        for (i = 0; i < borders.length; i++) {
+            if (i == otherIndex1 || i == otherIndex2)
+                continue;
+            if (borders[i].height == borderSize)
+                continue;
+            if ((borders[i].y >= y) != greater)
+                continue;
+            var line;
+            line = new Phaser.Line(borders[i].x, borders[i].y, borders[i].x, borders[i].y + borders[i].height);
+            var p = Phaser.Line.intersects(segment, line, true);
+            console.log(line);
+            if (p != null) {
+                if (getDist(new Phaser.Point(startX, y), p) < dist) {
+                    ans = p;
+                    dist = getDist(new Phaser.Point(startX, y), p);
+                    index = i;
+                }
+            }
+        }
+        return index;
+    },
+
+    getBorderForVerticalSegment: function(startY, endY, x, greater, otherIndex1, otherIndex2) {
+        var segment = new Phaser.Line(x, startY, x, endY);
+        var ans = -1, dist = 2000000, index = -1;
+        for (i = 0; i < borders.length; i++) {
+            if (i == otherIndex1 || i == otherIndex2)
+                continue;
+            if (borders[i].width == borderSize)
+                continue;
+            if ((borders[i].x >= x) != greater)
+                continue;
+            var line;
+            line = new Phaser.Line(borders[i].x, borders[i].y, borders[i].x + borders[i].width, borders[i].y);
+            var p = Phaser.Line.intersects(segment, line, true);
+            if (p != null) {
+                if (getDist(new Phaser.Point(x, startY), p) < dist) {
+                    ans = p;
+                    dist = getDist(new Phaser.Point(x, startY), p);
+                    index = i;
+                }
+            }
+        }
+        return index;
+    },
+
+    getBorderIndex: function(point, otherIndex) {
+        for (i = 0; i < borders.length; i++) {
+            if (i == otherIndex)
+                continue;
+            if (borders[i].width == borderSize) { //vertical
+                if (point.x == borders[i].x && point.y >= borders[i].y && point.y <= borders[i].y + borders[i].height)
+                    return i;
+            } else {
+                if (point.y == borders[i].y && point.x >= borders[i].x && point.x <= borders[i].x + borders[i].width)
+                    return i;
+            }
+        }
+        return -1;
     },
 
     update: function() {
@@ -238,9 +374,9 @@ lvl1.prototype = {
     },
 
     updateTrail: function() {
-        var point = this.getNearestPointOnBorder(dudeCenter);
-        if (Phaser.Math.fuzzyLessThan(getDist(new Phaser.Point(dudeCenter.body.x, dudeCenter.body.y), point), 2, 3) 
-                || dudeCenter.body.x == borderSize || dudeCenter.body.x == game.world.width - borderSize - 1 || 
+        var point = this.getNearestPointOnBorder(dudeCenter, true);
+        if (Phaser.Math.fuzzyLessThan(getDist(new Phaser.Point(dudeCenter.body.x, dudeCenter.body.y), point), 2, 2) || 
+            dudeCenter.body.x == borderSize || dudeCenter.body.x == game.world.width - borderSize - 1 || 
                 dudeCenter.body.y == borderSize || dudeCenter.body.y == game.world.height - borderSize - 1) {
             return;
         }
@@ -254,6 +390,7 @@ lvl1.prototype = {
         var bestDist = 20000000;
         var ans;
         var x, y;
+        var toAdd = 0;
         for (i = 0; i < borders.length; i++) {
             if (borders[i].width == trailSize || i == 2 || i == 3) { //vertical border
                 if (point.y >= borders[i].body.y && point.y <= borders[i].body.y + borders[i].height) {
