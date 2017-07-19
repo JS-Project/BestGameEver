@@ -20,6 +20,8 @@ var borderGroup;
 var borders = [];
 var isDead;
 var totalArea;
+var borderPoints = [];
+var foundInvader = 0;
 
 lvl1.prototype = {
 
@@ -156,6 +158,15 @@ lvl1.prototype = {
         var ends = [];
         if (trail.length == 0)
             return;
+
+        var node = new Phaser.Point(trail[0].x+1, trail[0].y+1);
+
+        this.fillArea(node, trail, borders);
+
+      
+
+        console.log("finished filling area\n");
+
         var newStart = this.getNearestPointOnBorder(trail[0]);
         var newEnd = this.getNearestPointOnBorder(trail[trail.length - 1]);
         trail.splice(0, 0, trailGroup.create(newStart.x, newStart.y, 'trail'));
@@ -164,104 +175,106 @@ lvl1.prototype = {
         // trail[trail.length - 1].kill();
         // trail[0] = trailGroup.create(newStart.x, newStart.y, 'trail');
         // trail[trail.length - 1] = trailGroup.create(newEnd.x, newEnd.y, 'trail');
-
-        ends.push(newStart);
-        for (i = 1; i < trail.length - 1; i++) {
-            if ((trail[i].body.x == trail[i - 1].body.x && trail[i].body.x == trail[i + 1].body.x) || 
-                (trail[i].body.y == trail[i - 1].body.y && trail[i].body.y == trail[i + 1].body.y))
-                continue;
-            else
-                ends.push(new Phaser.Point(trail[i].x, trail[i].y));
-        }
-        ends.push(newEnd);
         for (i = 0; i < trail.length; i++) {
             trail[i].kill();
         }
+       
         trail = [];
-        var newBorderStartIndex = borders.length;
-        for (i = 0; i < ends.length - 1; i++) {
-            var first = i;
-            var second = i + 1;
-            if ((ends[i].x == ends[i + 1].x && ends[i].y > ends[i + 1].y) || 
-                (ends[i].y == ends[i + 1].y && ends[i].x > ends[i + 1].x)) {
-                first = i + 1;
-                second = i;
-            }
-            var newBorder = borderGroup.create(ends[first].x, ends[first].y, 'border');
-            newBorder.scale.setTo(Math.abs(ends[i].x - ends[i + 1].x) + trailSize, 
-                Math.abs(ends[i].y - ends[i + 1].y) + trailSize);
-            newBorder.body.immovable = true;
-            borders.push(newBorder);
-        }
-        var newBorderEndIndex = borders.length - 1;
-        var dir = (ends[ends.length - 2].x < ends[ends.length - 1].x || 
-            (ends[ends.length - 2].x >= ends[ends.length - 1].x && ends[ends.length - 2].y < ends[ends.length - 1].y));
-        var curPoint = ends[ends.length - 1];
-        var oldIndex = borders.length - 1;
-        var curIndex = this.getBorderIndex(curPoint, oldIndex);
-        if (borders[borders.length - 1].width == borderSize) {//vertical
-            dir = !dir;
-        }
-        console.log(borders[curIndex].x + " " + borders[curIndex].y + " " + borders[curIndex].width + " " + borders[curIndex].height);
-        while (true) {
-            break;
-            var newBorder;
-            if (borders[curIndex].width == borderSize) {//vertical
-                if (dir) {
-                    var startY = borders[oldIndex].y;
-                    var endY = borders[curIndex].y + borders[curIndex].height;
-                    newBorder = this.getBorderForVerticalSegment(startY, endY, borders[curIndex].x, false, curIndex, oldIndex);
-                    dir = true;
-                    if (newBorder == -1) {
-                        newBorder = this.getBorderIndex(new Phaser.Point(borders[curIndex].x, borders[curIndex].y + borders[curIndex].height), curIndex);
-                        dir = true;
-                    }
-                } else {
-                    var endY = borders[oldIndex].y;
-                    var startY = borders[curIndex].y;
-                    newBorder = this.getBorderForVerticalSegment(startY, endY, borders[curIndex].x, true, curIndex, oldIndex);
-                    dir = false;
-                    if (newBorder == -1) {
-                        newBorder = this.getBorderIndex(new Phaser.Point(borders[curIndex].x, borders[curIndex].y, curIndex));
-                        dir = false;
-                    }
-                }
-                console.log("Y - " + startY, endY);
-            } else {//horizontal
-                if (dir) {
-                    var startX = borders[curIndex].x;
-                    var endX = borders[oldIndex].x;
-                    newBorder = this.getBorderForHorizontalSegment(endX, startX, borders[curIndex].y, false, curIndex, oldIndex);
-                    dir = true;
-                    if (newBorder == -1) {
-                        newBorder = this.getBorderIndex(new Phaser.Point(borders[curIndex].x, borders[curIndex].y), curIndex);
-                        dir = true;
-                    }
-                } else {
-                    var startX = borders[oldIndex].x;
-                    var endX = borders[curIndex].x + borders[curIndex].width;
-                    newBorder = this.getBorderForHorizontalSegment(startX, endX, borders[curIndex].y, true, curIndex, oldIndex);
-                    dir = false;
-                    if (newBorder == -1) {
-                        newBorder = this.getBorderIndex(new Phaser.Point(borders[curIndex].x + borders[curIndex].width, borders[curIndex].y), curIndex);
-                        dir = false;
-                    }
-                }
-                console.log("X - " + startX, endX);
-            }
-            oldIndex = curIndex;
-            curIndex = newBorder;
-            if (curIndex == -1) {
-                console.log("-1");
-                break;
-            }
-            console.log(dir);
-            console.log(curIndex);
-            console.log(borders[curIndex].x + " " + borders[curIndex].y + " " + borders[curIndex].width + " " + borders[curIndex].height);
-            console.log("--------------");
-            if (curIndex >= newBorderStartIndex)
-                break; 
-        }
+        // ends.push(newStart);
+        // for (i = 1; i < trail.length - 1; i++) {
+        //     if ((trail[i].body.x == trail[i - 1].body.x && trail[i].body.x == trail[i + 1].body.x) || 
+        //         (trail[i].body.y == trail[i - 1].body.y && trail[i].body.y == trail[i + 1].body.y))
+        //         continue;
+        //     else
+        //         ends.push(new Phaser.Point(trail[i].x, trail[i].y));
+        // }
+        // ends.push(newEnd);
+      
+        // var newBorderStartIndex = borders.length;
+        // for (i = 0; i < ends.length - 1; i++) {
+        //     var first = i;
+        //     var second = i + 1;
+        //     if ((ends[i].x == ends[i + 1].x && ends[i].y > ends[i + 1].y) || 
+        //         (ends[i].y == ends[i + 1].y && ends[i].x > ends[i + 1].x)) {
+        //         first = i + 1;
+        //         second = i;
+        //     }
+        //     var newBorder = borderGroup.create(ends[first].x, ends[first].y, 'border');
+        //     newBorder.scale.setTo(Math.abs(ends[i].x - ends[i + 1].x) + trailSize, 
+        //         Math.abs(ends[i].y - ends[i + 1].y) + trailSize);
+        //     newBorder.body.immovable = true;
+        //     borders.push(newBorder);
+        // }
+        // var newBorderEndIndex = borders.length - 1;
+        // var dir = (ends[ends.length - 2].x < ends[ends.length - 1].x || 
+        //     (ends[ends.length - 2].x >= ends[ends.length - 1].x && ends[ends.length - 2].y < ends[ends.length - 1].y));
+        // var curPoint = ends[ends.length - 1];
+        // var oldIndex = borders.length - 1;
+        // var curIndex = this.getBorderIndex(curPoint, oldIndex);
+        // if (borders[borders.length - 1].width == borderSize) {//vertical
+        //     dir = !dir;
+        // }
+       // console.log(borders[curIndex].x + " " + borders[curIndex].y + " " + borders[curIndex].width + " " + borders[curIndex].height);
+        // while (true) {
+        //     break;
+        //     var newBorder;
+        //     if (borders[curIndex].width == borderSize) {//vertical
+        //         if (dir) {
+        //             var startY = borders[oldIndex].y;
+        //             var endY = borders[curIndex].y + borders[curIndex].height;
+        //             newBorder = this.getBorderForVerticalSegment(startY, endY, borders[curIndex].x, false, curIndex, oldIndex);
+        //             dir = true;
+        //             if (newBorder == -1) {
+        //                 newBorder = this.getBorderIndex(new Phaser.Point(borders[curIndex].x, borders[curIndex].y + borders[curIndex].height), curIndex);
+        //                 dir = true;
+        //             }
+        //         } else {
+        //             var endY = borders[oldIndex].y;
+        //             var startY = borders[curIndex].y;
+        //             newBorder = this.getBorderForVerticalSegment(startY, endY, borders[curIndex].x, true, curIndex, oldIndex);
+        //             dir = false;
+        //             if (newBorder == -1) {
+        //                 newBorder = this.getBorderIndex(new Phaser.Point(borders[curIndex].x, borders[curIndex].y, curIndex));
+        //                 dir = false;
+        //             }
+        //         }
+        //         console.log("Y - " + startY, endY);
+        //     } else {//horizontal
+        //         if (dir) {
+        //             var startX = borders[curIndex].x;
+        //             var endX = borders[oldIndex].x;
+        //             newBorder = this.getBorderForHorizontalSegment(endX, startX, borders[curIndex].y, false, curIndex, oldIndex);
+        //             dir = true;
+        //             if (newBorder == -1) {
+        //                 newBorder = this.getBorderIndex(new Phaser.Point(borders[curIndex].x, borders[curIndex].y), curIndex);
+        //                 dir = true;
+        //             }
+        //         } else {
+        //             var startX = borders[oldIndex].x;
+        //             var endX = borders[curIndex].x + borders[curIndex].width;
+        //             newBorder = this.getBorderForHorizontalSegment(startX, endX, borders[curIndex].y, true, curIndex, oldIndex);
+        //             dir = false;
+        //             if (newBorder == -1) {
+        //                 newBorder = this.getBorderIndex(new Phaser.Point(borders[curIndex].x + borders[curIndex].width, borders[curIndex].y), curIndex);
+        //                 dir = false;
+        //             }
+        //         }
+        //         console.log("X - " + startX, endX);
+        //     }
+            // oldIndex = curIndex;
+            // curIndex = newBorder;
+            // if (curIndex == -1) {
+            //     console.log("-1");
+            //     break;
+            // }
+            // console.log(dir);
+            // console.log(curIndex);
+            // console.log(borders[curIndex].x + " " + borders[curIndex].y + " " + borders[curIndex].width + " " + borders[curIndex].height);
+            // console.log("--------------");
+            // if (curIndex >= newBorderStartIndex)
+            //     break; 
+       // }
+
         //console.log(ends[ends.length - 1].body.x + " " + ends[ends.length - 1].body.y);
     },
 
@@ -342,6 +355,7 @@ lvl1.prototype = {
         game.physics.arcade.overlap(trailGroup, invaderGroup, this.collision, null, this);
         game.physics.arcade.overlap(dudeCenterGroup, trailGroup, this.trailIntersect, null, this);
         game.physics.arcade.collide(invaderGroup, borderGroup);
+
         if (isDead)
             return;
         if (cursors.left.isDown)
@@ -412,9 +426,66 @@ lvl1.prototype = {
         }
         ans = new Phaser.Point(x, y);
         return ans;
+    },
+
+    fillArea: function(node, trailPoints, borderPoints) {
+
+      console.log("in fillArea, node is (", + node.x + "," + node.y + ")\n");
+
+      if (node.y > this.world.height || node.y < 0 || node.x > this.world.width || node.x < 0)
+        return;
+
+      if (foundInvader === 1){
+        console.log("found invader\n");
+        return;
+      }
+      console.log("in fillArea, after foundInvader check\n");
+      // check if node is part of trail
+      if (this.pointBelongsTo(trailGroup, node) === true){   
+        console.log("node (" + node.x +"," + node.y + ") is trail\n");
+        return;
+      }
+      console.log("in fillArea, after trail\n");
+
+      // OVERLAP JOBIA
+      
+      // check if node is part of border
+      if (this.pointBelongsTo(borderGroup, node) === true){
+        console.log("node (" + node.x +"," + node.y + ") is border\n");
+        return;
+      }
+      console.log("in fillArea, after border check\n");
+      //check if node is invader
+      if (this.pointBelongsTo(invaderGroup, node) === true) {
+        console.log("found invader on (" + node.x +"," + node.y + ")\n");
+        foundInvader = 1;
+        return;
+      }
+
+      borders.push(borderGroup.create(node.x, node.y, "border"));
+
+      console.log("in fillArea, after invader check\n");
+      this.fillArea(new Phaser.Point(node.x, node.y+1))
+      this.fillArea(new Phaser.Point(node.x+1, node.y));
+      this.fillArea(new Phaser.Point(node.x-1, node.y));       ; 
+      this.fillArea(new Phaser.Point(node.x+1, node.y-1)); 
+    
+    },
+
+    pointBelongsTo: function(group, node) {
+
+        console.log("in pointBelongsTo\n");
+       for (i = 0; i < group.children.length; i++) {
+         if (group.children[i].world.equals(node) === true)
+         {
+           console.log("in pointBelongsTo, TRUE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+           return true;
+         }
+        }
+        
+        console.log("in pointBelongsTo, false\n");
+        return false;
     }
-
-
 };
 
 function getArea(points) {
@@ -429,4 +500,5 @@ function getDist(first, second) {
     return Math.sqrt((first.x - second.x) * (first.x - second.x) + 
         (first.y - second.y) * (first.y - second.y));
 }
+
 
