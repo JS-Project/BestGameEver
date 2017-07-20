@@ -2,7 +2,7 @@ lvl2 = function(game) {
 
 };
 
-var lifeCount = 1, textGroup, lifeText, textStyle = {font: "15pt Arial", fill: '#ffffff'};
+var lifeCount = 3, textGroup, lifeText, textStyle = {font: "15pt Arial", fill: '#ffffff'};
 var dudeSpriteHeight = 48.0, dudeSpriteWidth = 32.0;
 var dudeHeight = 24.0, dudeWidth = 16.0;
 var borderSize = 2.0, trailSize = 2.0;
@@ -14,12 +14,12 @@ var trailGroup;
 var dudeCenterGroup, dudeCenter;
 var invaders = [];
 var invaderSize = 16.0;
-var invaderCount = 1;
+var invaderCount = 2;
 var trail = [];
 var borderGroup;
 var borders = [];
 var isDead;
-var totalArea;
+var totalArea, startArea;
 var worldX, worldY;
 var worldWidth, worldHeight;
 var leftBorder = 2, rightBorder = 3, bottomBorder = 0, topBorder = 1;
@@ -41,6 +41,7 @@ lvl2.prototype = {
 
     	game.physics.startSystem(Phaser.Physics.ARCADE);
         totalArea = game.world.height * game.world.width - 2 * game.world.height * borderSize - 2 * (game.world.width - 2 * borderSize) * borderSize;
+        startArea = totalArea;
         worldX = 0;
         worldY = 0;
         worldWidth = 800;
@@ -114,17 +115,16 @@ lvl2.prototype = {
 
 
     collision: function(singleTrail, invader) {
-        isDead = true;
-        for (i = 4; i < borders.length; i++)
-            borders[i].kill();
-        borders.length = 4;
         for (i = 0; i < trail.length; i++)
             trail[i].kill();
         trail = [];
-        dude.body.x = dudeStartX;
-        dude.body.y = dudeStartY;
+        dudeCenter.body.x = worldX + trailSize;
+        dudeCenter.body.y = worldY + worldHeight - trailSize - 1;
+        dude.body.y = dudeCenter.body.y - dudeHeight / 2.0;
+        dude.body.x = dudeCenter.body.x - dudeWidth / 2.0;
         lifeCount--;
         if (lifeCount == 0) {
+            isDead = true;
             for (i = 0; i < borders.length; i++)
                 borders[i].kill();
             dude.kill();
@@ -180,6 +180,7 @@ lvl2.prototype = {
             if (newBorder.width == trailSize) { //vertical
                 var leftArea = (newBorder.x - borders[leftBorder].x) * worldHeight;
                 var rightArea = (borders[rightBorder].x - newBorder.x) * worldHeight;
+                totalArea = Math.max(leftArea, rightArea);
                 if (leftArea > rightArea) {
                     for (j = 0; j < invaders.length; j++) {
                         if (invaders[j].body.x > newBorder.x) {
@@ -207,14 +208,62 @@ lvl2.prototype = {
                 borders[topBorder].width = worldWidth;
                 borders[bottomBorder].width = worldWidth;
             } else { //horizontal
-
+                var topArea = (newBorder.y - borders[topBorder].y) * worldWidth;
+                var bottomArea = (borders[bottomBorder].y - newBorder.y) * worldWidth;
+                totalArea = Math.max(topArea, bottomArea);
+                if (topArea > bottomArea) {
+                    for (j = 0; j < invaders.length; j++) {
+                        if (invaders[j].body.y > newBorder.y) {
+                            invaders[j].kill();
+                            invaderCount--;
+                        }
+                    }
+                    worldHeight = newBorder.y - borders[topBorder].y + trailSize;
+                    borders[bottomBorder].kill();
+                    borders[bottomBorder] = newBorder;
+                } else {
+                    for (j = 0; j < invaders.length; j++) {
+                        if (invaders[j].body.y < newBorder.y) {
+                            invaders[j].kill();
+                            invaderCount--;
+                        }
+                    }
+                    worldHeight = borders[bottomBorder].y - newBorder.y + trailSize;
+                    borders[topBorder].kill();
+                    borders[topBorder] = newBorder;
+                    borders[rightBorder].body.y = newBorder.y;
+                    borders[leftBorder].body.y = newBorder.y;
+                    worldY = newBorder.y;
+                }
+                borders[rightBorder].height = worldHeight;
+                borders[leftBorder].height = worldHeight;
             }
         }
+        if (invaderCount == 0 || totalArea < startArea * 5 / 100) {
+            for (i = 0; i < borders.length; i++)
+                borders[i].kill();
+            dude.kill();
+            textGroup.remove(lifeText);
+            lifeText = game.make.text(game.world.width / 2.0 - 40, game.world.height / 2.0 - 3, 'VICTORY', textStyle);
+            textGroup.add(lifeText);
+            return;
+        }
+        this.adjustDude();
+    },
+
+    adjustDude: function() {
+        dudeCenter.body.x = Math.max(dudeCenter.body.x, worldX + trailSize);
+        dudeCenter.body.y = Math.max(dudeCenter.body.y, worldY + trailSize);
+        dudeCenter.body.x = Math.min(dudeCenter.body.x, worldX + worldWidth - trailSize - 1);
+        dudeCenter.body.y = Math.min(dudeCenter.body.y, worldY + worldHeight - trailSize - 1);
     },
 
     update: function() {
         if (lifeCount == 0)
             return;
+        if (invaderCount == 0 || totalArea < startArea * 5 / 100) {
+            return;
+        }
         dudeCenter.body.x = dude.body.x + dudeWidth / 2.0;
         dudeCenter.body.y = dude.body.y + dudeHeight / 2.0;
         isDead = false;
