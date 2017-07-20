@@ -171,10 +171,6 @@ lvl1.prototype = {
         var newEnd = this.getNearestPointOnBorder(trail[trail.length - 1]);
         trail.splice(0, 0, trailGroup.create(newStart.x, newStart.y, 'trail'));
         trail.push(trailGroup.create(newEnd.x, newEnd.y, 'trail'));
-        // trail[0].kill();
-        // trail[trail.length - 1].kill();
-        // trail[0] = trailGroup.create(newStart.x, newStart.y, 'trail');
-        // trail[trail.length - 1] = trailGroup.create(newEnd.x, newEnd.y, 'trail');
         for (i = 0; i < trail.length; i++) {
             trail[i].kill();
         }

@@ -22,6 +22,7 @@ var isDead;
 var totalArea;
 var worldX, worldY;
 var worldWidth, worldHeight;
+var leftBorder = 2, rightBorder = 3, bottomBorder = 0, topBorder = 1;
 
 lvl2.prototype = {
 
@@ -138,10 +139,10 @@ lvl2.prototype = {
     },
 
     dudeAtTheWall: function(dudeCenter, border) {
-        dude.body.x = dudeCenter.x - dudeWidth / 2.0;
-        dude.body.y = dudeCenter.y - dudeHeight / 2.0;
         dude.body.velocity.x = 0;
         dude.body.velocity.y = 0;
+        dude.body.x = dudeCenter.body.x - dudeWidth / 2.0;
+        dude.body.y = dudeCenter.body.y - dudeHeight / 2.0;
         var ends = [];
         if (trail.length == 0)
             return;
@@ -149,7 +150,6 @@ lvl2.prototype = {
         var newEnd = this.getNearestPointOnBorder(trail[trail.length - 1]);
         trail.splice(0, 0, trailGroup.create(newStart.x, newStart.y, 'trail'));
         trail.push(trailGroup.create(newEnd.x, newEnd.y, 'trail'));
-
         ends.push(newStart);
         for (i = 1; i < trail.length - 1; i++) {
             if ((trail[i].body.x == trail[i - 1].body.x && trail[i].body.x == trail[i + 1].body.x) || 
@@ -172,10 +172,43 @@ lvl2.prototype = {
                 second = i;
             }
             var newBorder = borderGroup.create(ends[first].x, ends[first].y, 'border');
-            newBorder.scale.setTo(Math.abs(ends[i].x - ends[i + 1].x) + trailSize, 
-                Math.abs(ends[i].y - ends[i + 1].y) + trailSize);
+            newBorder.width = Math.abs(ends[i].x - ends[i + 1].x) + trailSize;
+            newBorder.height = Math.abs(ends[i].y - ends[i + 1].y) + trailSize;
             newBorder.body.immovable = true;
             borders.push(newBorder);
+            var poly;
+            if (newBorder.width == trailSize) { //vertical
+                var leftArea = (newBorder.x - borders[leftBorder].x) * worldHeight;
+                var rightArea = (borders[rightBorder].x - newBorder.x) * worldHeight;
+                if (leftArea > rightArea) {
+                    for (j = 0; j < invaders.length; j++) {
+                        if (invaders[j].body.x > newBorder.x) {
+                            invaders[j].kill();
+                            invaderCount--;
+                        }
+                    }
+                    worldWidth = newBorder.x - borders[leftBorder].x + trailSize;
+                    borders[rightBorder].kill();
+                    borders[rightBorder] = newBorder;
+                } else {
+                    for (j = 0; j < invaders.length; j++) {
+                        if (invaders[j].body.x < newBorder.x) {
+                            invaders[j].kill();
+                            invaderCount--;
+                        }
+                    }
+                    worldWidth = borders[rightBorder].x - newBorder.x + trailSize;
+                    borders[leftBorder].kill();
+                    borders[leftBorder] = newBorder;
+                    borders[topBorder].body.x = newBorder.x;
+                    borders[bottomBorder].body.x = newBorder.x;
+                    worldX = newBorder.x;
+                }
+                borders[topBorder].width = worldWidth;
+                borders[bottomBorder].width = worldWidth;
+            } else { //horizontal
+
+            }
         }
     },
 
@@ -222,12 +255,8 @@ lvl2.prototype = {
     },
 
     isDudeAtTheWall: function() {
-        return (dudeCenter.x == worldX + borderSize || dudeCenter.x == worldX + worldWidth - borderSize - 1 ||
-            dudeCenter.y == worldY + borderSize || dudeCenter.y == worldY + worldHeight - borderSize - 1);
-        // return (Phaser.Math.fuzzyEqual(dudeCenter.x, worldX + borderSize, 3) || 
-        //     Phaser.Math.fuzzyEqual(dudeCenter.x, worldX + worldWidth - borderSize - 1, 3) || 
-        //     Phaser.Math.fuzzyEqual(dudeCenter.y, worldY + borderSize, 3) || 
-        //     Phaser.Math.fuzzyEqual(dudeCenter.y, worldY + worldHeight - borderSize - 1, 3));
+        return (dudeCenter.body.x == worldX + borderSize || dudeCenter.body.x == worldX + worldWidth - borderSize - 1 ||
+            dudeCenter.body.y == worldY + borderSize || dudeCenter.body.y == worldY + worldHeight - borderSize - 1);
     },
 
     updateTrail: function() {
