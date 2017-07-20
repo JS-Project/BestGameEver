@@ -23,6 +23,7 @@ var totalArea, startArea;
 var worldX, worldY;
 var worldWidth, worldHeight;
 var leftBorder = 2, rightBorder = 3, bottomBorder = 0, topBorder = 1;
+var heartGroup, hearts, heartSize = 16;
 
 lvl2.prototype = {
 
@@ -32,8 +33,8 @@ lvl2.prototype = {
         game.load.image('invader1', 'assets/images/invader1.png');
         game.load.image('invader2', 'assets/images/invader2.png');
         game.load.image('border', 'assets/images/1x1_blue.png');
-        game.load.image('trail', 'assets/images/1x1_red.png')
-
+        game.load.image('trail', 'assets/images/1x1_red.png');
+        game.load.image('heart', 'assets/images/heart.png');
         cursors = game.input.keyboard.createCursorKeys();
     },
     	
@@ -46,6 +47,13 @@ lvl2.prototype = {
         worldY = 0;
         worldWidth = 800;
         worldHeight = 600;
+        heartGroup = game.add.group();
+        hearts = [];
+        for (i = 0; i < lifeCount; i++) {
+            hearts.push(heartGroup.create(0, 0, 'heart'));
+            hearts[i].scale.setTo(heartSize / 2400.0, heartSize / 2400.0);   
+        }
+        this.adjustHearts();
         borderGroup = game.add.group();
         borderGroup.enableBody = true;
         borders.push(borderGroup.create(0, game.world.height - borderSize, 'border'));
@@ -109,10 +117,19 @@ lvl2.prototype = {
             invaders[i].body.bounce.y = 1;
         }
         textGroup = game.add.group();
-        lifeText = game.make.text(0, 0, 'life count: ' + lifeCount, textStyle);
-        textGroup.add(lifeText);    
     },
 
+    adjustHearts: function() {
+        while (hearts.length != lifeCount) {
+            hearts[hearts.length - 1].kill();
+            hearts.length = hearts.length - 1;
+        }
+        for (i = 0; i < lifeCount; i++) {
+            hearts[i].x = worldX + trailSize + i * heartSize;
+            hearts[i].y = worldY + trailSize;
+            console.log(hearts[i].x, hearts[i].y);
+        }
+    },
 
     collision: function(singleTrail, invader) {
         for (i = 0; i < trail.length; i++)
@@ -123,19 +140,16 @@ lvl2.prototype = {
         dude.body.y = dudeCenter.body.y - dudeHeight / 2.0;
         dude.body.x = dudeCenter.body.x - dudeWidth / 2.0;
         lifeCount--;
+        this.adjustHearts();
         if (lifeCount == 0) {
             isDead = true;
             for (i = 0; i < borders.length; i++)
                 borders[i].kill();
             dude.kill();
-            textGroup.remove(lifeText);
             lifeText = game.make.text(game.world.width / 2.0 - 60, game.world.height / 2.0 - 3, 'Game Over', textStyle);
             textGroup.add(lifeText);
             return;
         }
-        textGroup.remove(lifeText);
-        lifeText = game.make.text(0, 0, 'life count: ' + lifeCount, textStyle);
-        textGroup.add(lifeText);
     },
 
     dudeAtTheWall: function(dudeCenter, border) {
@@ -243,11 +257,11 @@ lvl2.prototype = {
             for (i = 0; i < borders.length; i++)
                 borders[i].kill();
             dude.kill();
-            textGroup.remove(lifeText);
             lifeText = game.make.text(game.world.width / 2.0 - 40, game.world.height / 2.0 - 3, 'VICTORY', textStyle);
             textGroup.add(lifeText);
             return;
         }
+        this.adjustHearts();
         this.adjustDude();
     },
 
@@ -343,17 +357,3 @@ lvl2.prototype = {
 
 
 };
-
-function getArea(points) {
-    var doubleArea = 0;
-    for (i = 0; i < points.length; i++) {
-        doubleArea += points[i].x * points[(i + 1) % points.length].y - points[i].y * points[(i + 1) % points.length].x;
-    }
-    return Math.abs(doubleArea) * 0.5;
-}
-
-function getDist(first, second) {
-    return Math.sqrt((first.x - second.x) * (first.x - second.x) + 
-        (first.y - second.y) * (first.y - second.y));
-}
-
