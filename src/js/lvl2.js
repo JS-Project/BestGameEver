@@ -11,7 +11,7 @@ var trailGroup;
 var dudeCenterGroup, dudeCenter;
 var invaders = [];
 var invaderSize = 16.0;
-var invaderCount = 2;
+var invaderCount = 5;
 var trail = [];
 var borderGroup;
 var borders = [];
@@ -20,7 +20,12 @@ var totalArea, startArea;
 var worldX, worldY;
 var worldWidth, worldHeight;
 var leftBorder = 2, rightBorder = 3, bottomBorder = 0, topBorder = 1;
+<<<<<<< HEAD
 var heartGroup, hearts;
+=======
+var heartGroup, hearts, heartSize = 16;
+var winPercent = 5, invaderPercent = 20;
+>>>>>>> f234d78aeea238ac8220f46a7b5f0508e6abcfcd
 
 lvl2.prototype = {
 
@@ -191,15 +196,29 @@ lvl2.prototype = {
             if (newBorder.width == this.game.assets.trailSize) { //vertical
                 var leftArea = (newBorder.x - borders[leftBorder].x) * worldHeight;
                 var rightArea = (borders[rightBorder].x - newBorder.x) * worldHeight;
-                totalArea = Math.max(leftArea, rightArea);
-                if (leftArea > rightArea) {
+                var leftInvaderCount = 0, rightInvaderCount = 0;
+                for (i = 0; i < invaders.length; i++) {
+                    if (invaders[i].body.x > newBorder.x) {
+                        rightInvaderCount++;
+                    } else {
+                        leftInvaderCount++;
+                    }
+                }
+                if (leftArea + leftInvaderCount * startArea * invaderPercent / 100.0 > rightArea + rightInvaderCount * startArea * invaderPercent / 100.0) {
                     for (j = 0; j < invaders.length; j++) {
                         if (invaders[j].body.x > newBorder.x) {
                             invaders[j].kill();
                             invaderCount--;
+                            invaders.splice(j, 1);
+                            j--;
                         }
                     }
+<<<<<<< HEAD
                     worldWidth = newBorder.x - borders[leftBorder].x + this.game.assets.trailSize;
+=======
+                    totalArea = leftArea;
+                    worldWidth = newBorder.x - borders[leftBorder].x + trailSize;
+>>>>>>> f234d78aeea238ac8220f46a7b5f0508e6abcfcd
                     borders[rightBorder].kill();
                     borders[rightBorder] = newBorder;
                 } else {
@@ -207,9 +226,16 @@ lvl2.prototype = {
                         if (invaders[j].body.x < newBorder.x) {
                             invaders[j].kill();
                             invaderCount--;
+                            invaders.splice(j, 1);
+                            j--;
                         }
                     }
+<<<<<<< HEAD
                     worldWidth = borders[rightBorder].x - newBorder.x + this.game.assets.trailSize;
+=======
+                    totalArea = rightArea;
+                    worldWidth = borders[rightBorder].x - newBorder.x + trailSize;
+>>>>>>> f234d78aeea238ac8220f46a7b5f0508e6abcfcd
                     borders[leftBorder].kill();
                     borders[leftBorder] = newBorder;
                     borders[topBorder].body.x = newBorder.x;
@@ -221,15 +247,29 @@ lvl2.prototype = {
             } else { //horizontal
                 var topArea = (newBorder.y - borders[topBorder].y) * worldWidth;
                 var bottomArea = (borders[bottomBorder].y - newBorder.y) * worldWidth;
-                totalArea = Math.max(topArea, bottomArea);
-                if (topArea > bottomArea) {
+                var topInvaderCount = 0, bottomInvaderCount = 0;
+                for (i = 0; i < invaders.length; i++) {
+                    if (invaders[i].body.y > newBorder.y) {
+                        bottomInvaderCount++;
+                    } else {
+                        topInvaderCount++;
+                    }
+                }                
+                if (topArea + topInvaderCount * startArea * invaderPercent / 100.0 > bottomArea + bottomInvaderCount * startArea * invaderPercent / 100.0) {
                     for (j = 0; j < invaders.length; j++) {
                         if (invaders[j].body.y > newBorder.y) {
                             invaders[j].kill();
                             invaderCount--;
+                            invaders.splice(j, 1);
+                            j--;
                         }
                     }
+<<<<<<< HEAD
                     worldHeight = newBorder.y - borders[topBorder].y + this.game.assets.trailSize;
+=======
+                    totalArea = topArea;
+                    worldHeight = newBorder.y - borders[topBorder].y + trailSize;
+>>>>>>> f234d78aeea238ac8220f46a7b5f0508e6abcfcd
                     borders[bottomBorder].kill();
                     borders[bottomBorder] = newBorder;
                 } else {
@@ -237,9 +277,16 @@ lvl2.prototype = {
                         if (invaders[j].body.y < newBorder.y) {
                             invaders[j].kill();
                             invaderCount--;
+                            invaders.splice(j, 1);
+                            j--;
                         }
                     }
+<<<<<<< HEAD
                     worldHeight = borders[bottomBorder].y - newBorder.y + this.game.assets.trailSize;
+=======
+                    totalArea = bottomArea;
+                    worldHeight = borders[bottomBorder].y - newBorder.y + trailSize;
+>>>>>>> f234d78aeea238ac8220f46a7b5f0508e6abcfcd
                     borders[topBorder].kill();
                     borders[topBorder] = newBorder;
                     borders[rightBorder].body.y = newBorder.y;
@@ -250,7 +297,7 @@ lvl2.prototype = {
                 borders[leftBorder].height = worldHeight;
             }
         }
-        if (invaderCount == 0 || totalArea < startArea * 5 / 100) {
+        if (invaderCount == 0 || totalArea < startArea * winPercent / 100) {
             for (i = 0; i < borders.length; i++)
                 borders[i].kill();
             dude.kill();
