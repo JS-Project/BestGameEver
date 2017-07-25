@@ -17,6 +17,12 @@ game.assets = {
  
  lifeCount: 		  3,
  textStyle:           {font: "15pt Arial", fill: '#ffffff'},
- heartSize:           16
+ heartSize:           16,
 
+ borderImage:         'assets/images/1x1_blue.png',
+ trailImage:          'assets/images/1x1_red.png', 
+ heartImage: 		  'assets/images/heart.png',
+ invader2Image:       'assets/images/invader2.png',
+ invader1Image:       'assets/images/invader1.png',
+ dudeImage:			  'assets/images/dude.png'
 }

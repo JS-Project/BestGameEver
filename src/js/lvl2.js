@@ -20,23 +20,20 @@ var totalArea, startArea;
 var worldX, worldY;
 var worldWidth, worldHeight;
 var leftBorder = 2, rightBorder = 3, bottomBorder = 0, topBorder = 1;
-<<<<<<< HEAD
 var heartGroup, hearts;
-=======
-var heartGroup, hearts, heartSize = 16;
 var winPercent = 5, invaderPercent = 20;
->>>>>>> f234d78aeea238ac8220f46a7b5f0508e6abcfcd
+
 
 lvl2.prototype = {
 
     preload: function() {
 
-    	game.load.spritesheet('dude', 'assets/images/dude.png', this.game.assets.dudeSpriteWidth, this.game.assets.dudeSpriteHeight);
-        game.load.image('invader1', 'assets/images/invader1.png');
-        game.load.image('invader2', 'assets/images/invader2.png');
-       // game.load.image(border, 'assets/images/1x1_blue.png');
-        game.load.image('trail', 'assets/images/1x1_red.png');
-        game.load.image('heart', 'assets/images/heart.png');
+    	game.load.spritesheet('dude', this.game.assets.dudeImage, this.game.assets.dudeSpriteWidth, this.game.assets.dudeSpriteHeight);
+        game.load.image('invader1', this.game.assets.invader1Image);
+        game.load.image('invader2', this.game.assets.invader2Image);
+        game.load.image('border', this.game.assets.borderImage);
+        game.load.image('trail', this.game.assets.trailImage);
+        game.load.image('heart', this.game.assets.heartImage);
         cursors = game.input.keyboard.createCursorKeys();
     },
     	
@@ -213,12 +210,10 @@ lvl2.prototype = {
                             j--;
                         }
                     }
-<<<<<<< HEAD
-                    worldWidth = newBorder.x - borders[leftBorder].x + this.game.assets.trailSize;
-=======
+
                     totalArea = leftArea;
-                    worldWidth = newBorder.x - borders[leftBorder].x + trailSize;
->>>>>>> f234d78aeea238ac8220f46a7b5f0508e6abcfcd
+                    worldWidth = newBorder.x - borders[leftBorder].x + this.game.assets.trailSize;
+
                     borders[rightBorder].kill();
                     borders[rightBorder] = newBorder;
                 } else {
@@ -230,12 +225,10 @@ lvl2.prototype = {
                             j--;
                         }
                     }
-<<<<<<< HEAD
-                    worldWidth = borders[rightBorder].x - newBorder.x + this.game.assets.trailSize;
-=======
+
                     totalArea = rightArea;
-                    worldWidth = borders[rightBorder].x - newBorder.x + trailSize;
->>>>>>> f234d78aeea238ac8220f46a7b5f0508e6abcfcd
+                    worldWidth = borders[rightBorder].x - newBorder.x + this.game.assets.trailSize;
+
                     borders[leftBorder].kill();
                     borders[leftBorder] = newBorder;
                     borders[topBorder].body.x = newBorder.x;
@@ -264,12 +257,10 @@ lvl2.prototype = {
                             j--;
                         }
                     }
-<<<<<<< HEAD
-                    worldHeight = newBorder.y - borders[topBorder].y + this.game.assets.trailSize;
-=======
+
                     totalArea = topArea;
-                    worldHeight = newBorder.y - borders[topBorder].y + trailSize;
->>>>>>> f234d78aeea238ac8220f46a7b5f0508e6abcfcd
+                    worldHeight = newBorder.y - borders[topBorder].y + this.game.assets.trailSize;
+
                     borders[bottomBorder].kill();
                     borders[bottomBorder] = newBorder;
                 } else {
@@ -281,12 +272,10 @@ lvl2.prototype = {
                             j--;
                         }
                     }
-<<<<<<< HEAD
-                    worldHeight = borders[bottomBorder].y - newBorder.y + this.game.assets.trailSize;
-=======
+
                     totalArea = bottomArea;
-                    worldHeight = borders[bottomBorder].y - newBorder.y + trailSize;
->>>>>>> f234d78aeea238ac8220f46a7b5f0508e6abcfcd
+                    worldHeight = borders[bottomBorder].y - newBorder.y + this.game.assets.trailSize;
+
                     borders[topBorder].kill();
                     borders[topBorder] = newBorder;
                     borders[rightBorder].body.y = newBorder.y;
