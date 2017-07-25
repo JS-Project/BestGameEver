@@ -1,4 +1,5 @@
 var game = new Phaser.Game(800, 600, Phaser.AUTO, '');
+var helper = new Helper();
 
 game.state.add('Preloader', preloader);
 game.state.add('Menu', menu);
@@ -25,4 +26,6 @@ game.assets = {
  invader2Image:       'assets/images/invader2.png',
  invader1Image:       'assets/images/invader1.png',
  dudeImage:			  'assets/images/dude.png'
+
+
 }
